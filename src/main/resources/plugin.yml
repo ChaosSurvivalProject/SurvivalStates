@@ -1,0 +1,45 @@
+name: SurvivalStates
+version: '1.0.0'
+main: io.github.chaossurvival.survivalstates.SurvivalStates
+api-version: '1.21'
+author: ChaosSurvivalProject
+description: >-
+  生存状态插件：口渴、疲劳、体感温度、活动量与强制睡眠。
+  零 NMS、零运行依赖，仅使用 Bukkit/Paper/Purpur 公共 API。
+website: https://github.com/ChaosSurvivalProject/SurvivalStates
+
+commands:
+  survival:
+    description: 生存状态主命令
+    usage: /survival <status|sleep|drink|feed|set|reload|update|doctor>
+    aliases: [ss, surv]
+    permission: survival.status.self
+
+permissions:
+  survival.status.self:
+    description: 查看自己的状态
+    default: true
+  survival.status.other:
+    description: 查看他人状态
+    default: op
+  survival.sleep:
+    description: 主动尝试休息
+    default: true
+  survival.item.give:
+    description: 发放调试物品
+    default: op
+  survival.admin.set:
+    description: 设置状态（测试边界）
+    default: op
+  survival.admin.reload:
+    description: 安全重载
+    default: op
+  survival.admin.update:
+    description: 更新管理
+    default: op
+  survival.admin.doctor:
+    description: 诊断输出
+    default: op
+  survival.bypass.fatigue:
+    description: 豁免强制睡眠
+    default: op

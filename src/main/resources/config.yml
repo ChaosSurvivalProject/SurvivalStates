@@ -1,0 +1,143 @@
+# =====================================================================
+# SurvivalStates 配置文件  ——  生存状态插件
+# 目标平台：Minecraft 1.21.1 / PurPur build 2329 / Java 21
+#
+# 说明：数学模型类配置（calibration/hydration/fatigue/temperature/activity/
+# attributes/sleep/foodSafety）改动后必须重启服务器才生效；
+# messages 与 sounds 可通过 /survival reload 安全重载。
+# 非法数值会回退到内置默认并写入 config-resolved.yml，不会静默纠正。
+# =====================================================================
+
+apiVersion: 1
+
+platform:
+  requiredMinecraft: "1.21.1"
+  requiredBuild: 2329
+  requiredJava: 21
+  failOnUnexpectedApi: true
+
+ticks:
+  stateIntervalTicks: 20          # 每 20 tick（1 秒）积分一次状态
+  environmentIntervalTicks: 100   # 每 5 秒采样一次环境
+  persistenceIntervalSeconds: 30  # 每 30 秒原子保存
+  maxIntegrationSecondsPerTick: 0.25
+
+# 240 与 120 只是“无耦合校准基准”，并非玩法保证时长。
+calibration:
+  fatigueEmptyToFullMinutes: 240
+  hydrationFullToEmptyMinutes: 120
+  vanillaFoodSlownessTargetMinutes: 15
+  foodCalibrationScript: "standard_idle_no_jump_no_combat"
+
+hydration:
+  baseDrainPerSecond: 0.0138889
+  heatMaxMultiplier: 2.20
+  coldReductionMultiplier: 0.35
+  activityExtraMultiplier: 0.35
+  dehydrationFoodMultiplier: 1.25
+
+fatigue:
+  baseGainPerSecond: 0.0069444
+  hydrationLowMultiplier: 0.75
+  activityMultiplier: 0.45
+  coldMultiplier: 0.30
+  heatMultiplier: 0.20
+  foodCreditDecaySeconds: 600
+
+temperature:
+  neutral: 50
+  hotEnter: 62
+  hotExit: 57
+  coldEnter: 24
+  coldExit: 29
+  biomeWeight: 14
+  altitudeFallPerBlockAbove62: 0.0065
+  envTauSeconds: 120
+  worldProfiles:
+    overworld: {enabled: true, hotCap: 85, coldFloor: 0}
+    nether: {enabled: true, flatOverride: 78}
+    end: {enabled: false}
+
+activity:
+  windowSeconds: 30
+  speedReferenceBlocksPerSecond: 4.3
+  breakWeight: 0.25
+  attackWeight: 0.20
+  ignoreFlight: true
+  ignoreVehicle: false
+  vehicleWeight: 0.50
+
+attributes:
+  everyTicks: 20
+  attackDamage: {enabled: true, maxPenalty: -0.22}
+  movementSpeed: {enabled: true, maxPenalty: -0.15}
+  miningEfficiency: {enabled: true, maxPenalty: -0.18}
+  attackSpeed: {enabled: false, maxPenalty: -0.10}
+  maxHealth: {enabled: false, maxPenaltyHearts: 1.0, minimumHearts: 18}
+  lowHealthEnter: 6
+  lowHealthExit: 8
+
+sleep:
+  warningEnter: 97
+  warningExit: 93
+  forceAt: 100
+  armSeconds: 3
+  minRandomSeconds: 180
+  maxRandomSeconds: 600
+  resumeWindowSeconds: 5
+  noBedEfficiency: 0.55
+  recoveryLockoutSeconds: 60
+  countAsVanillaRest: false
+  visualSleepRequired: false
+  bedCheckIntervalSeconds: 2
+
+foodSafety:
+  suspiciousHarmChance: 0.50
+  badAlwaysHarmful: true
+  nauseaSeconds: 30
+  hungerSeconds: 30
+  badWaterEffect: "POISON"        # POISON 或 HUNGER，二选一
+  stackExistingEffects: false
+
+commands:
+  reloadSafeSettings: true
+  allowForceSleepCancel: false
+
+updater:
+  enabled: false
+  repository: "ChaosSurvivalProject/SurvivalStates"
+  channel: "stable"
+  manifestUrl: "https://example.invalid/releases/survival-manifest.json"
+  publicKeyFingerprint: "SHA256:..."
+  requireSignature: true
+  requireSha256: true
+  checkHours: 6
+  downloadTimeoutSeconds: 60
+  restartGraceSeconds: 20
+  maxBackupGenerations: 5
+  allowDowngrade: false
+
+# MiniMessage 消息。占位符白名单：{player} {fatigue} {hydration}
+# {temperature} {seconds} {quality}。请勿写入玩家输入。
+messages:
+  prefix: "<dark_gray>[<gold>生存<dark_gray>] "
+  join: "<gray>生存状态已加载：水分 {hydration}，疲劳 {fatigue}"
+  warnFatigue: "<red>你非常疲惫，尽快休息！"
+  forceSleepArmed: "<dark_red><bold>极度疲劳！{seconds} 秒后将被迫休息"
+  forceSleepActive: "<dark_red>你已进入强制休息状态"
+  restStarted: "<aqua>开始休息，质量估计 {quality}"
+  restFinished: "<green>休息完成，精神恢复了"
+  restInterrupted: "<yellow>休息被打断"
+  noBedRest: "<yellow>没有床，原地打盹效率较低"
+  drank: "<aqua>你喝下了水"
+  feelSick: "<red>你感到不适……"
+  reloadDone: "<green>安全设置已重载；数学模型需重启生效"
+  lowHealthProtected: "<gray>生命过低，额外状态压力已暂停"
+
+sounds:
+  enabled: true
+  warning: "BLOCK_NOTE_BLOCK_BASS"
+  restStart: "BLOCK_WOOL_PLACE"
+  drink: "ENTITY_PLAYER_SPLASH"
+  danger: "ENTITY_PLAYER_HURT"
+  category: "PLAYERS"

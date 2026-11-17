@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+}
+
+group = 'io.github.chaossurvival'
+version = '1.0.0'
+
+// 全程使用 Java 21 toolchain，编译目标与运行目标锁定 21。
+// 干净机器若无 JDK 21，foojay 解析器会自动下载（见 settings.gradle）。
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    // Paper / PurPur 1.21.1 API 仓库。compileOnly 使用 purpur-api，
+    // 仅依赖公共 Bukkit/Paper API，不引入任何服务端实现。
+    maven { name = 'papermc'; url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { name = 'purpur'; url = 'https://repo.purpurmc.org/snapshots' }
+    maven { name = 'sonatype'; url = 'https://oss.sonatype.org/content/groups/public/' }
+}
+
+dependencies {
+    // 只编译期依赖 API，不打包服务端实现。
+    compileOnly 'org.purpurmc.purpur:purpur-api:1.21.1-R0.1-SNAPSHOT'
+
+    // 测试：JUnit 5 + Mockito；纯函数状态核心不依赖 Bukkit 运行时。
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.purpurmc.purpur:purpur-api:1.21.1-R0.1-SNAPSHOT'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        exceptionFormat 'short'
+    }
+}
+
+// 构建产物统一命名，便于更新清单引用；本项目零运行依赖，普通 jar 即最终产物。
+tasks.named('jar') {
+    archiveFileName = "survival-states-${project.version}.jar"
+}
