@@ -15,7 +15,9 @@ import java.util.UUID;
 public final class PlayerRuntime {
 
     private final UUID uuid;
-    private StateVector state;
+    // BUGFIX(Bug3): 在线秒数小数进位累加器，避免每 tick 取整导致永不增长。
+    private double onlineSecondCarry;
+    private volatile StateVector state;
     private final Hysteresis hysteresis = new Hysteresis();
     private EnvironmentSample environment = EnvironmentSample.neutral();
     private final RandomGenerator rng;
@@ -38,7 +40,7 @@ public final class PlayerRuntime {
     private boolean lowHealthProtected;
 
     // 休息会话（见 RestSession）。
-    private RestSession restSession;
+    private volatile RestSession restSession;
 
     // 供水/进食幂等：上一消费序号。
     private long lastConsumeSeq = -1;
@@ -67,6 +69,14 @@ public final class PlayerRuntime {
 
     public void setState(StateVector state) {
         this.state = state;
+    }
+
+    public double onlineSecondCarry() {
+        return onlineSecondCarry;
+    }
+
+    public void setOnlineSecondCarry(double v) {
+        this.onlineSecondCarry = v;
     }
 
     public Hysteresis hysteresis() {
