@@ -71,10 +71,18 @@ public final class RestService {
             Location bed = findBed(p);
             boolean bedAvailable = bed != null;
             boolean safety = !hostileNearby(p);
-            boolean quiet = System.currentTimeMillis() - session.lastDamageEpoch() > 5000
+            // BUGFIX: lastDamageEpoch 存的是 epoch 秒(/1000)，原先用毫秒当前时间相减恒为真，
+            // 受伤后 5 秒"不安静"判定完全失效。统一到秒单位。
+            boolean quiet = System.currentTimeMillis() / 1000L - session.lastDamageEpoch() > 5
                     && rt.breaksLast5s() == 0 && rt.attacksLast5s() == 0;
             boolean hungerOkay = p.getFoodLevel() > 6;
 
+            // BUGFIX: tryResume 此前从未被调用，5 秒回床恢复窗口是死代码；
+            // 玩家受伤后即便回到床上也必然被打断。满足回床/安全/安静条件时尝试恢复。
+            if (session.phase() == RestSession.Phase.PAUSED
+                    && bedAvailable && safety && quiet && hungerOkay) {
+                session.tryResume();
+            }
             double dt = 0.05; // 每个服务器 tick 约 0.05 秒，RestSession 内部累计有效秒数
             double noBedEff = plugin.getConfig().getDouble("sleep.noBedEfficiency", 0.55);
             boolean finished = session.tick(dt, bedAvailable, safety, quiet, hungerOkay, noBedEff);
