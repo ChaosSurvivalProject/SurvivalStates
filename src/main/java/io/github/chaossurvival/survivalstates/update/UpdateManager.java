@@ -51,7 +51,9 @@ public final class UpdateManager {
                 .build();
         Path data = plugin.getDataFolder().toPath();
         this.updateDir = data.resolve("updates");
-        this.backupDir = data.resolve("backups");
+        // BUGFIX: 与 StorageService 的 migrations 备份目录分离，避免 migration-* 目录混入
+        // 导致 pruneBackups 的 Long.parseLong 抛 NumberFormatException。
+        this.backupDir = data.resolve("update-backups");
     }
 
     public void init() {
@@ -94,6 +96,16 @@ public final class UpdateManager {
                 state = State.FAILED;
                 lastError = platform.reason();
                 return platform;
+            }
+            // BUGFIX: check 必须比较插件版本，否则 allowDowngrade=false 形同虚设，
+            // 同版本/更旧 manifest 也会报告"发现新版本"乃至静默降级。
+            String currentVer = plugin.getDescription().getVersion();
+            int cmp = compareVersions(manifest.pluginVersion(), currentVer);
+            boolean allowDowngrade = config.get().allowDowngrade();
+            if (cmp < 0 || (cmp == 0 && !allowDowngrade)) {
+                state = State.IDLE;
+                lastError = "目标版本 " + manifest.pluginVersion() + " 不高于当前版本 " + currentVer;
+                return VerifyResult.fail(lastError);
             }
             currentManifest = manifest;
             state = State.AVAILABLE;
@@ -220,6 +232,27 @@ public final class UpdateManager {
                 });
     }
 
+    /**
+     * BUGFIX: 语义版本比较（仅数字段 x.y.z，忽略 -SNAPSHOT 等后缀）。
+     * 返回 >0 表示 a 更新，<0 表示 a 更旧，0 相等；无法解析的段按 0 处理。
+     */
+    static int compareVersions(String a, String b) {
+        String[] pa = String.valueOf(a).split("[-+]", 2)[0].split("\\.");
+        String[] pb = String.valueOf(b).split("[-+]", 2)[0].split("\\.");
+        int n = Math.max(pa.length, pb.length);
+        for (int i = 0; i < n; i++) {
+            int x = num(pa, i), y = num(pb, i);
+            if (x != y) return Integer.compare(x, y);
+        }
+        return 0;
+    }
+
+    private static int num(String[] arr, int i) {
+        if (i >= arr.length) return 0;
+        try { return Integer.parseInt(arr[i].trim()); }
+        catch (NumberFormatException e) { return 0; }
+    }
+
     /** 解析 manifest JSON（用 Gson）。 */
     private Manifest parseManifest(String json) {
         try {
@@ -300,7 +333,9 @@ public final class UpdateManager {
     private void pruneBackups() throws IOException {
         int max = config.get().maxBackupGenerations();
         try (java.util.stream.Stream<Path> stream = Files.list(backupDir)) {
+            // BUGFIX: 仅处理本模块生成的纯时间戳目录；跳过其它来源的目录，避免解析异常中断更新。
             java.util.List<Path> dirs = stream.filter(Files::isDirectory)
+                    .filter(p -> p.getFileName().toString().matches("\\d+"))
                     .sorted(java.util.Comparator.comparingLong(
                             (Path p) -> Long.parseLong(p.getFileName().toString()))
                             .reversed())

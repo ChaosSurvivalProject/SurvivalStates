@@ -199,11 +199,14 @@ public final class StateService {
 
             Integrator.Result result = integrator.integrate(rt.state(), input);
             StateVector next = result.state();
-            // 在线秒数按真实经过时间累加。
-            long addedSeconds = (long) Math.floor(realDt + 1e-9);
+            // BUGFIX: 20 TPS 下 realDt≈0.05s，直接取整恒为 0，在线秒数永不增长。
+            // 用 double 累计小数部分，满 1 秒再进位。
+            double onlineAcc = rt.onlineSecondCarry() + Math.max(0.0, realDt);
+            long addedSeconds = (long) Math.floor(onlineAcc);
+            rt.setOnlineSecondCarry(onlineAcc - addedSeconds);
             next = new StateVector(next.hydration(), next.fatigue(), next.temperature(),
                     next.activity(), next.quality(), next.shortLoad(), next.envTemp(),
-                    rt.state().onlineSeconds() + Math.max(0, addedSeconds));
+                    rt.state().onlineSeconds() + addedSeconds);
             rt.setState(next);
             rt.consumeRecovery(dt);
 

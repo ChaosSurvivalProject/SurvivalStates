@@ -69,7 +69,9 @@ public final class FoodSafety {
         }
         boolean harmful = switch (quality) {
             case CLEAN -> false;
-            case BAD -> true; // 坏物恒有害
+            // BUGFIX: badAlwaysHarmful 此前被读取却从未参与判定，是死配置。
+            case BAD -> tuning.badAlwaysHarmful()
+                    || (rng != null && rng.nextDouble() < tuning.suspiciousHarmChance());
             case SUSPECT -> rng != null && rng.nextDouble() < tuning.suspiciousHarmChance();
         };
 
