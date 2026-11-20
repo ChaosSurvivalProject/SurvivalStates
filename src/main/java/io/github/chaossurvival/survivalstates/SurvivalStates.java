@@ -146,7 +146,9 @@ public final class SurvivalStates extends JavaPlugin {
                 getConfig().getBoolean("foodSafety.badAlwaysHarmful", true),
                 getConfig().getInt("foodSafety.nauseaSeconds", 30),
                 getConfig().getInt("foodSafety.hungerSeconds", 30),
-                getConfig().getInt("foodSafety.nauseaSeconds", 30)
+                // BUGFIX: 原第 5 参误读 nauseaSeconds，导致坏水中毒时长被反胃配置错误耦合；
+                // 无独立配置项时复用 hungerSeconds（与坏水 HUNGER 分支一致）。
+                getConfig().getInt("foodSafety.hungerSeconds", 30)
         );
     }
 
