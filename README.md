@@ -1,10 +1,22 @@
 # SurvivalStates — PurPur 生存状态插件
 
+<p align="center">
+  <img src="assets/images/banner.png" alt="SurvivalStates 宣传图" width="820">
+</p>
+
+
 一个面向 **Minecraft Java 1.21.1 / PurPur build 2329 / Java 21** 的生存状态插件。
 提供口渴、疲劳、体感温度、活动量与强制睡眠机制，呈现方式为 **BossBar + 物品模型 + 音效**。
 
 > **这是 Bukkit/Paper/PurPur 插件，不是 Mod。** 不使用 Forge/Fabric/NeoForge，
 > 不含任何 NMS、`net.minecraft.*`、`org.bukkit.craftbukkit.*` 或 Purpur 私有实现。零运行依赖。
+
+## 效果预览
+
+<p align="center">
+  <img src="assets/images/demo.png" alt="SurvivalStates 演示图" width="720">
+</p>
+
 
 ## 核心设计
 
